@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification History</title>
+  <style>
+:root {
+  --bg-color: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --critical-color: #ef4444;
+  --low-bg: #f8fafc;
+  --low-text: #94a3b8;
+  --hover-bg: #e2e8f0;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --border-radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f172a;
+    --bg-card: #1e293b;
+    --bg-sidebar: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --accent-color: #3b82f6;
+    --accent-hover: #60a5fa;
+    --critical-color: #ef4444;
+    --low-bg: #0f172a;
+    --low-text: #475569;
+    --hover-bg: #1e293b;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.5;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-sidebar);
+  z-index: 10;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.app-list {
+  list-style: none;
+  padding: 10px;
+}
+
+.app-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: background-color 0.15s;
+}
+
+.app-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.app-item.active {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.app-item.active .app-count, .app-item.active .app-name {
+  color: #fff;
+}
+
+.app-item-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  margin-right: 12px;
+  object-fit: contain;
+}
+
+.app-item-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+.app-name {
+  flex: 1;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main-header {
+  padding: 24px 32px 0;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 10;
+}
+
+.header-titles h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.refresh-hint {
+  font-style: italic;
+  margin-left: 8px;
+}
+
+.search-container input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+.search-container input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.tabs {
+  display: flex;
+  gap: 24px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab:hover {
+  color: var(--text-main);
+}
+
+.tab.active {
+  color: var(--accent-color);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--accent-color);
+}
+
+.badge {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.tab.active .badge {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--accent-color);
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Date Header */
+.date-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 24px 0 8px;
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-color);
+  padding: 8px 0;
+  z-index: 5;
+}
+
+.date-header:first-child {
+  margin-top: 0;
+}
+
+/* Card */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.card.urgency-2 {
+  border-left: 4px solid var(--critical-color);
+}
+
+.card.urgency-0 {
+  background-color: var(--low-bg);
+  opacity: 0.8;
+}
+
+.card-icon {
+  flex-shrink: 0;
+}
+
+.card-icon img, .card-icon .app-item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.card-icon .app-item-avatar {
+  font-size: 18px;
+}
+
+.card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.card-app-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.card-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-summary {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.card-body {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.card.urgency-0 .card-body {
+  color: var(--low-text);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.empty-state p {
+  font-size: 0.95rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  .main-header, .content-area {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+</style>
+</head>
+<body>
+<div style="background:#3b82f6;color:#fff;text-align:center;padding:6px;font:600 13px system-ui">Live demo — synthetic sample data. Runs locally on Linux via the recorder.</div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Apps</h2>
+      </div>
+      <ul id="app-filter-list" class="app-list">
+        <!-- populated by js -->
+      </ul>
+    </aside>
+    <main class="main-content">
+      <header class="main-header">
+        <div class="header-titles">
+          <h1>Notification History</h1>
+          <p class="subtitle">
+            Updated <span id="updated-at">...</span>.
+            <span class="refresh-hint">Close and reopen to refresh.</span>
+          </p>
+        </div>
+        <div class="search-container">
+          <input type="text" id="search-box" placeholder="Search notifications..." aria-label="Search notifications">
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="today">Today <span class="badge" id="badge-today">0</span></button>
+          <button class="tab" data-tab="earlier">Earlier <span class="badge" id="badge-earlier">0</span></button>
+        </div>
+      </header>
+      <div class="content-area">
+        <div id="notification-list" class="notification-list">
+          <!-- populated by js -->
+        </div>
+        <div id="empty-state" class="empty-state hidden">
+          <!-- populated by js -->
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+window.NOTIFICATIONS = [{"ts": 1783611820.3985279, "iso": "2026-07-09T21:13:40.398528+05:30", "app": "Slack", "app_icon": "", "desktop_entry": "", "summary": "Alex Rivera", "body": "Can you review the PR when you get a sec?", "urgency": 1, "app_raw": "Slack", "icon_path": null}, {"ts": 1783611460.3985279, "iso": "2026-07-09T21:07:40.398528+05:30", "app": "Google Chrome", "app_icon": "", "desktop_entry": "google-chrome", "summary": "Calendar", "body": "Design sync in 15 minutes — Meet link ready", "urgency": 1, "app_raw": "Google Chrome", "icon_path": null}, {"ts": 1783611040.3985279, "iso": "2026-07-09T21:00:40.398528+05:30", "app": "Spotify", "app_icon": "", "desktop_entry": "spotify", "summary": "Now Playing", "body": "Midnight City — M83", "urgency": 0, "app_raw": "Spotify", "icon_path": null}, {"ts": 1783609900.3985279, "iso": "2026-07-09T20:41:40.398528+05:30", "app": "Thunderbird", "app_icon": "", "desktop_entry": "thunderbird", "summary": "GitHub", "body": "Your Actions workflow run succeeded", "urgency": 1, "app_raw": "Thunderbird", "icon_path": null}, {"ts": 1783608820.3985279, "iso": "2026-07-09T20:23:40.398528+05:30", "app": "KDE Connect", "app_icon": "", "desktop_entry": "org.kde.kdeconnect", "summary": "Pixel 9 Pro", "body": "Battery low: 18% remaining", "urgency": 2, "app_raw": "KDE Connect", "icon_path": null}, {"ts": 1783607740.3985279, "iso": "2026-07-09T20:05:40.398528+05:30", "app": "VS Code", "app_icon": "", "desktop_entry": "code", "summary": "Extension updated", "body": "Python extension updated to v2026.6.0", "urgency": 0, "app_raw": "VS Code", "icon_path": null}, {"ts": 1783606240.3985279, "iso": "2026-07-09T19:40:40.398528+05:30", "app": "Terminal", "app_icon": "", "desktop_entry": "", "summary": "Build finished", "body": "npm run build completed in 42s", "urgency": 1, "app_raw": "Terminal", "icon_path": null}, {"ts": 1783604140.3985279, "iso": "2026-07-09T19:05:40.398528+05:30", "app": "Google Chrome", "app_icon": "", "desktop_entry": "google-chrome", "summary": "YouTube", "body": "Fireship uploaded: '100 Seconds of Rust'", "urgency": 1, "app_raw": "Google Chrome", "icon_path": null}, {"ts": 1783599940.3985279, "iso": "2026-07-09T17:55:40.398528+05:30", "app": "Slack", "app_icon": "", "desktop_entry": "", "summary": "CI / CD", "body": "Deployment to staging succeeded ✅", "urgency": 1, "app_raw": "Slack", "icon_path": null}, {"ts": 1783596340.3985279, "iso": "2026-07-09T16:55:40.398528+05:30", "app": "Firefox", "app_icon": "", "desktop_entry": "firefox", "summary": "Download complete", "body": "ubuntu-24.04.iso finished downloading", "urgency": 1, "app_raw": "Firefox", "icon_path": null}, {"ts": 1783521940.3985279, "iso": "2026-07-08T20:15:40.398528+05:30", "app": "Discord", "app_icon": "", "desktop_entry": "discord", "summary": "#dev-team", "body": "3 new messages in dev-team", "urgency": 1, "app_raw": "Discord", "icon_path": null}, {"ts": 1783517140.3985279, "iso": "2026-07-08T18:55:40.398528+05:30", "app": "System", "app_icon": "", "desktop_entry": "", "summary": "Software Updates", "body": "14 package updates available", "urgency": 1, "app_raw": "System", "icon_path": null}, {"ts": 1783503940.3985279, "iso": "2026-07-08T15:15:40.398528+05:30", "app": "Thunderbird", "app_icon": "", "desktop_entry": "thunderbird", "summary": "Newsletter", "body": "This Week in Open Source is here", "urgency": 0, "app_raw": "Thunderbird", "icon_path": null}, {"ts": 1783439140.3985279, "iso": "2026-07-07T21:15:40.398528+05:30", "app": "Spotify", "app_icon": "", "desktop_entry": "spotify", "summary": "Discover Weekly", "body": "Your new mixtape is ready", "urgency": 0, "app_raw": "Spotify", "icon_path": null}];
+window.GENERATED_AT = "2026-07-09T21:15:40.402018+05:30";
+</script>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const notifications = window.NOTIFICATIONS || [];
+  const generatedAt = window.GENERATED_AT || new Date().toISOString();
+  
+  // State
+  let state = {
+    tab: 'today', // 'today' or 'earlier'
+    appFilter: 'all',
+    searchQuery: ''
+  };
+
+  // DOM Elements
+  const appFilterList = document.getElementById('app-filter-list');
+  const notificationList = document.getElementById('notification-list');
+  const emptyState = document.getElementById('empty-state');
+  const searchBox = document.getElementById('search-box');
+  const badgeToday = document.getElementById('badge-today');
+  const badgeEarlier = document.getElementById('badge-earlier');
+  const updatedAtSpan = document.getElementById('updated-at');
+  const tabs = document.querySelectorAll('.tab');
+
+  // Format generated time
+  try {
+    const genDate = new Date(generatedAt);
+    updatedAtSpan.textContent = genDate.toLocaleString(undefined, { 
+      dateStyle: 'medium', timeStyle: 'short' 
+    });
+    updatedAtSpan.title = generatedAt;
+  } catch (e) {
+    updatedAtSpan.textContent = generatedAt;
+  }
+
+  // Pre-process Data
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayTs = todayStart.getTime() / 1000;
+
+  const processedNotifs = notifications.map(n => {
+    return {
+      ...n,
+      isToday: (n.ts || 0) >= todayTs,
+      searchStr: `${n.app} ${n.summary} ${n.body}`.toLowerCase()
+    };
+  });
+
+  // Calculate App stats
+  const appStats = {};
+  processedNotifs.forEach(n => {
+    const app = n.app || 'Unknown';
+    if (!appStats[app]) {
+      appStats[app] = { count: 0, icon: n.icon_path, app: app };
+    }
+    appStats[app].count++;
+    // Keep first seen icon path if not already set
+    if (!appStats[app].icon && n.icon_path) {
+      appStats[app].icon = n.icon_path;
+    }
+  });
+
+  const appStatsArray = Object.values(appStats).sort((a, b) => b.count - a.count);
+
+  // Helper: Hashed Color
+  function getAvatarColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 65%, 45%)`;
+  }
+
+  function getInitials(str) {
+    return str ? str.charAt(0).toUpperCase() : '?';
+  }
+
+  // Global fallback so a failed <img> (e.g. .xpm icons browsers can't render)
+  // swaps to a letter-avatar without inline-HTML quoting problems.
+  window.__nhAvatar = function (img) {
+    img.outerHTML = createAvatarHTML(
+      img.getAttribute('data-app') || '',
+      img.getAttribute('data-cls') || ''
+    );
+  };
+
+  function createIconHTML(iconPath, appName, className) {
+    if (iconPath) {
+      // URL encode path but keep slashes
+      const encoded = iconPath.split('/').map(encodeURIComponent).join('/');
+      return `<img src="file://${encoded}" class="${className}" alt="${escapeHtml(appName)}" data-app="${escapeHtml(appName)}" data-cls="${escapeHtml(className)}" onerror="window.__nhAvatar(this)">`;
+    }
+    return createAvatarHTML(appName, className);
+  }
+
+  function createAvatarHTML(appName, className) {
+    const color = getAvatarColor(appName);
+    const initial = getInitials(appName);
+    return `<div class="${className}" style="background-color: ${color}">${initial}</div>`;
+  }
+
+  function renderSidebar() {
+    let html = `
+      <li class="app-item ${state.appFilter === 'all' ? 'active' : ''}" data-app="all">
+        <div class="app-item-avatar" style="background-color: var(--accent-color)">*</div>
+        <span class="app-name">All apps</span>
+        <span class="app-count">${processedNotifs.length}</span>
+      </li>
+    `;
+    
+    appStatsArray.forEach(stat => {
+      html += `
+        <li class="app-item ${state.appFilter === stat.app ? 'active' : ''}" data-app="${escapeHtml(stat.app)}">
+          ${createIconHTML(stat.icon, stat.app, 'app-item-icon')}
+          <span class="app-name" title="${escapeHtml(stat.app)}">${escapeHtml(stat.app)}</span>
+          <span class="app-count">${stat.count}</span>
+        </li>
+      `;
+    });
+    
+    appFilterList.innerHTML = html;
+    
+    // Bind events
+    appFilterList.querySelectorAll('.app-item').forEach(el => {
+      el.addEventListener('click', () => {
+        state.appFilter = el.getAttribute('data-app');
+        renderSidebar(); // re-render to update active state
+        renderContent();
+      });
+    });
+  }
+
+  function escapeHtml(unsafe) {
+    return (unsafe || '').toString()
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+  }
+
+  function formatTimeRelative(ts) {
+    const diff = (Date.now() / 1000) - ts;
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  function formatDateGroup(ts) {
+    const date = new Date(ts * 1000);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    date.setHours(0,0,0,0);
+    if (date.getTime() === yesterday.getTime()) {
+      return "Yesterday";
+    }
+    return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function renderContent() {
+    // Filter
+    const filtered = processedNotifs.filter(n => {
+      if (state.appFilter !== 'all' && n.app !== state.appFilter) return false;
+      if (state.searchQuery && !n.searchStr.includes(state.searchQuery)) return false;
+      return true;
+    });
+
+    const todayNotifs = filtered.filter(n => n.isToday);
+    const earlierNotifs = filtered.filter(n => !n.isToday);
+
+    // Update badges
+    badgeToday.textContent = todayNotifs.length;
+    badgeEarlier.textContent = earlierNotifs.length;
+
+    // Switch tab automatically if empty logic (optional, keeping it simple: just render active tab)
+    const activeNotifs = state.tab === 'today' ? todayNotifs : earlierNotifs;
+
+    // Render list
+    notificationList.innerHTML = '';
+    
+    if (processedNotifs.length === 0) {
+      notificationList.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      emptyState.innerHTML = `
+        <h3>No notifications yet</h3>
+        <p>Waiting for new desktop notifications.</p>
+      `;
+      return;
+    }
+
+    if (activeNotifs.length === 0) {
+      notificationList.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      if (state.searchQuery || state.appFilter !== 'all') {
+        emptyState.innerHTML = `
+          <h3>No matches found</h3>
+          <p>Try adjusting your search or app filter.</p>
+        `;
+      } else if (state.tab === 'today') {
+        emptyState.innerHTML = `
+          <h3>Nothing today</h3>
+          <p>You're all caught up for today.</p>
+        `;
+      } else {
+        emptyState.innerHTML = `
+          <h3>No earlier notifications</h3>
+          <p>Nothing found before today.</p>
+        `;
+      }
+      return;
+    }
+
+    notificationList.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+
+    let html = '';
+    let lastDateGroup = null;
+
+    activeNotifs.forEach(n => {
+      // Date Header for Earlier tab
+      if (state.tab === 'earlier') {
+        const group = formatDateGroup(n.ts);
+        if (group !== lastDateGroup) {
+          html += `<div class="date-header">${escapeHtml(group)}</div>`;
+          lastDateGroup = group;
+        }
+      }
+
+      const urgencyClass = `urgency-${n.urgency}`;
+      const absoluteTime = new Date(n.ts * 1000).toLocaleString();
+      const relativeTime = formatTimeRelative(n.ts);
+
+      html += `
+        <div class="card ${urgencyClass}">
+          <div class="card-icon">
+            ${createIconHTML(n.icon_path, n.app, 'app-item-avatar')}
+          </div>
+          <div class="card-content">
+            <div class="card-header">
+              <span class="card-app-name">${escapeHtml(n.app)}</span>
+              <span class="card-time" title="${escapeHtml(absoluteTime)}">${escapeHtml(relativeTime)}</span>
+            </div>
+            ${n.summary ? `<div class="card-summary">${escapeHtml(n.summary)}</div>` : ''}
+            ${n.body ? `<div class="card-body">${escapeHtml(n.body)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    notificationList.innerHTML = html;
+  }
+
+  // Event Listeners
+  tabs.forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tabBtn.classList.add('active');
+      state.tab = tabBtn.getAttribute('data-tab');
+      renderContent();
+    });
+  });
+
+  searchBox.addEventListener('input', (e) => {
+    state.searchQuery = e.target.value.toLowerCase();
+    renderContent();
+  });
+
+  // Init
+  // Fallback to earlier if today is empty and earlier is not
+  const initialTodayCount = processedNotifs.filter(n => n.isToday).length;
+  if (initialTodayCount === 0 && processedNotifs.length > 0) {
+    state.tab = 'earlier';
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="earlier"]').classList.add('active');
+  }
+
+  renderSidebar();
+  renderContent();
+});
+
+</script>
+</body>
+</html>

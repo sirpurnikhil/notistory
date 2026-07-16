@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Notistory
+Comment=Browse your desktop notification history
+Exec=__INSTALL_DIR__/bin/open-notistory.sh
+Icon=__INSTALL_DIR__/src/icon.svg
+Terminal=false
+Categories=Utility;

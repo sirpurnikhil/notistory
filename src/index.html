@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification History</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Apps</h2>
+      </div>
+      <ul id="app-filter-list" class="app-list">
+        <!-- populated by js -->
+      </ul>
+    </aside>
+    <main class="main-content">
+      <header class="main-header">
+        <div class="header-titles">
+          <h1>Notification History</h1>
+          <p class="subtitle">
+            Updated <span id="updated-at">...</span>.
+            <span class="refresh-hint">Close and reopen to refresh.</span>
+          </p>
+        </div>
+        <div class="search-container">
+          <input type="text" id="search-box" placeholder="Search notifications..." aria-label="Search notifications">
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="today">Today <span class="badge" id="badge-today">0</span></button>
+          <button class="tab" data-tab="earlier">Earlier <span class="badge" id="badge-earlier">0</span></button>
+        </div>
+      </header>
+      <div class="content-area">
+        <div id="notification-list" class="notification-list">
+          <!-- populated by js -->
+        </div>
+        <div id="empty-state" class="empty-state hidden">
+          <!-- populated by js -->
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

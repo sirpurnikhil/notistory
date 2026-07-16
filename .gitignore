@@ -1,0 +1,20 @@
+# Generated notification snapshot — contains the user's real notifications. Never commit.
+src/data.js
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local agent / editor state
+.claude/
+AGENT_TASKS.md
+
+# Internal build journal (kept locally, not published)
+PROJECT_LOG.md
+TODO.md
+handoffs/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
