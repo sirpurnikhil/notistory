@@ -9,12 +9,15 @@ gives you a clean, searchable, browsable history — sorted newest-first, split 
 **Earlier**, and filterable **per application**. Like your phone's notification log, but for your
 Linux desktop.
 
+[![Live demo](https://img.shields.io/badge/▶_Live_demo-sirpurnikhil.github.io%2Fnotistory-3b82f6)](https://sirpurnikhil.github.io/notistory/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform: Linux](https://img.shields.io/badge/Platform-Linux-informational)
 ![Desktop: freedesktop / KDE](https://img.shields.io/badge/Desktop-freedesktop%20%C2%B7%20KDE-1d99f3)
 ![Python 3](https://img.shields.io/badge/Python-3-3776ab?logo=python&logoColor=white)
 ![Dependencies: minimal](https://img.shields.io/badge/JS-vanilla%20%C2%B7%20no%20build-f7df1e)
 ![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
+
+**▶ Try the [live demo](https://sirpurnikhil.github.io/notistory/)** (synthetic sample data — the real app runs locally on Linux).
 
 <br>
 
