@@ -1,7 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+    initApp();
+  } catch (e) {
+    console.error('Notistory failed to render:', e);
+    document.body.innerHTML = `
+      <div style="max-width:520px;margin:15vh auto;text-align:center;font-family:sans-serif;padding:0 20px">
+        <h2>Something went wrong</h2>
+        <p>Notistory couldn't display the notification history (${e && e.message ? e.message.replace(/</g, '&lt;') : 'unknown error'}).</p>
+        <p>Try reopening the app. If this keeps happening, run
+          <code>bin/notistory-diagnose.sh</code> from the project folder and attach the report to a
+          <a href="https://github.com/sirpurnikhil/notistory/issues/new" target="_blank" rel="noopener">GitHub issue</a>.</p>
+      </div>
+    `;
+  }
+});
+
+function initApp() {
   const notifications = window.NOTIFICATIONS || [];
   const generatedAt = window.GENERATED_AT || new Date().toISOString();
-  
+
   // State
   let state = {
     tab: 'today', // 'today' or 'earlier'
@@ -278,4 +295,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderSidebar();
   renderContent();
-});
+}

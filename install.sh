@@ -34,12 +34,23 @@ if [ -z "$PYTHON" ]; then
   exit 1
 fi
 
+# Fail fast with a clear fix instead of installing a service that will crash-loop silently.
+if ! "$PYTHON" -c "import dbus, gi" 2>/dev/null; then
+  echo "ERROR: missing required Python modules (python3-dbus and/or python3-gi)." >&2
+  echo "Install them for your distro, then re-run ./install.sh:" >&2
+  echo "  Debian/Ubuntu: sudo apt install python3-dbus python3-gi" >&2
+  echo "  Fedora:        sudo dnf install python3-dbus python3-gobject" >&2
+  echo "  Arch:          sudo pacman -S python-dbus python-gobject" >&2
+  exit 1
+fi
+
 echo "Installing Notistory from: $INSTALL_DIR"
 
 # 1) Make scripts executable
 chmod +x "$INSTALL_DIR/src/notify-logger.py" \
          "$INSTALL_DIR/src/generate-data.py" \
-         "$INSTALL_DIR/bin/open-notistory.sh"
+         "$INSTALL_DIR/bin/open-notistory.sh" \
+         "$INSTALL_DIR/bin/notistory-diagnose.sh"
 
 # 2) Install + start the recorder as a user service (paths resolved from template)
 mkdir -p "$SYSTEMD_DIR"
@@ -62,10 +73,22 @@ update-desktop-database "$APPS_DIR" 2>/dev/null || true
 # 4) Generate the first snapshot so the UI opens to something
 "$PYTHON" "$INSTALL_DIR/src/generate-data.py" || true
 
+# 5) Verify the recorder actually came up — a service that fails to start is worse than
+# no service, because the user would otherwise assume history is being recorded when it isn't.
+sleep 1
 echo ""
 echo "=== Notistory installed ==="
 echo "Recorder:"
 systemctl --user status "$SERVICE" --no-pager | head -n 3
 echo ""
-echo "Launch it from the app menu / Desktop ('Notistory'), or run:"
-echo "  $INSTALL_DIR/bin/open-notistory.sh"
+if systemctl --user is-active --quiet "$SERVICE"; then
+  echo "Launch it from the app menu / Desktop ('Notistory'), or run:"
+  echo "  $INSTALL_DIR/bin/open-notistory.sh"
+else
+  echo "WARNING: the recorder service is not running." >&2
+  echo "Recent log lines:" >&2
+  journalctl --user -u "$SERVICE" -n 20 --no-pager 2>/dev/null >&2 || true
+  echo "" >&2
+  echo "Run $INSTALL_DIR/bin/notistory-diagnose.sh for a full diagnostic report before filing an issue." >&2
+  exit 1
+fi

@@ -5,10 +5,28 @@ import json, os, glob
 DATA_DIR = os.path.expanduser("~/.local/share/notistory")
 LOG_PATH = os.path.join(DATA_DIR, "notifications.jsonl")
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
-MAX_ROWS = 8000  # cap the newest N notifications rendered
 
 CONFIG_DIR = os.path.expanduser("~/.config/notistory")
 NAME_MAP_PATH = os.path.join(CONFIG_DIR, "app-names.json")
+CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
+DEFAULT_MAX_DISPLAYED = 8000
+
+
+def load_display_limit():
+    """Read max_displayed_entries from the shared config.json (written by notify-logger.py).
+    Falls back to the default if the config is missing/invalid — never fails the run."""
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+        val = cfg.get("max_displayed_entries", DEFAULT_MAX_DISPLAYED)
+        if isinstance(val, (int, float)) and val > 0:
+            return int(val)
+    except Exception:
+        pass
+    return DEFAULT_MAX_DISPLAYED
+
+
+MAX_ROWS = load_display_limit()  # cap the newest N notifications rendered
 
 # App names that carry no useful identity — prefer the desktop-entry hint instead.
 GENERIC_APPS = {"", "notify-send", "notify_send", "notify", "unknown",

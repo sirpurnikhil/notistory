@@ -2,6 +2,11 @@
 Description=Notistory notification recorder (D-Bus monitor)
 After=graphical-session.target
 PartOf=graphical-session.target
+# If it still can't stay up after 10 restarts in 5 minutes, stop trying instead of
+# crash-looping forever — check `journalctl --user -u notistory` or run
+# bin/notistory-diagnose.sh when that happens.
+StartLimitIntervalSec=300
+StartLimitBurst=10
 
 # NOTE: This is a template. `install.sh` substitutes __PYTHON__ and __INSTALL_DIR__
 # and writes the resolved unit to ~/.config/systemd/user/notistory.service.

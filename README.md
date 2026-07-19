@@ -143,6 +143,22 @@ Keys match either the raw app name or its `desktop-entry` id (case-insensitive).
 - No network calls, no telemetry, no accounts.
 - Clear history anytime: stop the service, delete/trim the JSONL file, start it again —
   `systemctl --user stop notistory && : > ~/.local/share/notistory/notifications.jsonl && systemctl --user start notistory`.
+- **Storage is capped automatically** — the log self-trims once it passes 25MB (keeping the
+  newest 20,000 entries), and any single notification body is truncated past 4000 characters, so
+  it can never grow unbounded or slow the app down. Tune this in
+  `~/.config/notistory/config.json`.
+
+## Troubleshooting
+
+- Something not working? Run `bin/notistory-diagnose.sh` — it writes a local diagnostic report
+  (service status, journal tail, versions, log size; **no notification content**) to
+  `~/.local/share/notistory/diagnostic-report.txt` and opens the GitHub issue form.
+- The recorder retries its D-Bus connection with backoff on transient failures (e.g. right at
+  login) and logs to the systemd journal (`journalctl --user -u notistory`) instead of failing
+  silently. If it can't recover, systemd stops retrying after 10 attempts in 5 minutes rather than
+  crash-looping forever.
+- `install.sh` checks for required dependencies (`python3-dbus`, `python3-gi`) and verifies the
+  service actually started before reporting success.
 
 ## Project structure
 
@@ -165,6 +181,11 @@ docs/                    self-contained live demo (GitHub Pages)
 - [ ] "Do not record" per-app rules
 - [ ] Export / archive rotation for very long histories
 - [ ] Packaging (AUR / `.deb`)
+
+## Contributing
+
+Bug reports and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: see
+[SECURITY.md](SECURITY.md). Release history: see [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
