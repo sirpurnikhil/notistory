@@ -47,6 +47,7 @@ def build_records():
         ts = now - minutes * 60
         recs.append({
             "ts": ts,
+            "mins_ago": minutes,
             "iso": datetime.fromtimestamp(ts).astimezone().isoformat(),
             "app": app,
             "app_icon": "",
@@ -84,8 +85,17 @@ def write_docs(rows):
     css = open(os.path.join(SRC, "style.css"), encoding="utf-8").read()
     appjs = open(os.path.join(SRC, "app.js"), encoding="utf-8").read()
     index = open(os.path.join(SRC, "index.html"), encoding="utf-8").read()
+    # Timestamps are recomputed in the browser from `mins_ago` so the public demo always
+    # reads as "just now / today" instead of ageing away from the build date.
     data = ("window.NOTIFICATIONS = " + json.dumps(rows, ensure_ascii=False) + ";\n"
-            + 'window.GENERATED_AT = "' + datetime.now().astimezone().isoformat() + '";')
+            + "(function () {\n"
+            + "  var now = Date.now() / 1000;\n"
+            + "  window.NOTIFICATIONS.forEach(function (n) {\n"
+            + "    n.ts = now - n.mins_ago * 60;\n"
+            + "    n.iso = new Date(n.ts * 1000).toISOString();\n"
+            + "  });\n"
+            + "  window.GENERATED_AT = new Date().toISOString();\n"
+            + "})();")
     # Inline everything so the page is self-contained (GitHub Pages, no server).
     index = index.replace('<link rel="stylesheet" href="style.css">', f"<style>\n{css}\n</style>")
     index = index.replace('<script src="data.js"></script>', f"<script>\n{data}\n</script>")
@@ -103,7 +113,8 @@ def main():
     # raw sample (committed, no machine-specific icon paths)
     with open(os.path.join(HERE, "demo-notifications.jsonl"), "w", encoding="utf-8") as f:
         for r in recs:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            row = {k: v for k, v in r.items() if k != "mins_ago"}  # keep the sample schema-identical to real data
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
     # local screenshot build — resolve real icons for a richer shot
     write_data_js(process(recs, resolve_icons=True), os.path.join(SRC, "data.js"))
     # GitHub Pages demo — no file:// icon paths (won't exist off this machine)
